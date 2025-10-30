@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notifications - Seekooh</title>
+
+  <!-- ========================================
+       BOOTSTRAP 5 CSS - CDN
+       ======================================== -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- ========================================
+       END BOOTSTRAP 5 CSS
+       ======================================== -->
+
+  <style>
+    /* =========================================
+       CUSTOM CSS STYLES START
+       ========================================= */
+    
+    /* -------------------------
+       CSS Variables / Theme Colors
+       ------------------------- */
+    :root{
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --muted: #6c757d;
+      --primary: #2563eb; /* blue */
+      --primary-foreground: #fff;
+      --chat-bubble: #f1f3f5;
+      --online: #34d399;
+      --danger: #ef4444;
+      --sidebar: #0f172a;
+      --sidebar-fg: #f8fafc;
+    }
+
+    /* -------------------------
+       Body & Global Styles
+       ------------------------- */
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* -------------------------
+       Sidebar Styling
+       ------------------------- */
+    #app-sidebar {
+      background: linear-gradient(180deg, var(--sidebar), #071024);
+      color: var(--sidebar-fg);
+      min-height: 100vh;
+      padding: 1rem;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 250px;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+    
+    /* Mobile sidebar hidden by default */
+    @media (max-width: 767px) {
+      #app-sidebar {
+        transform: translateX(-100%);
+      }
+      #app-sidebar.show {
+        transform: translateX(0);
+      }
+    }
+    
+    #app-sidebar .logo {
+      display:flex;
+      gap:.75rem;
+      align-items:center;
+      margin-bottom:2rem;
+    }
+    #app-sidebar .logo .brand {
+      width:38px;
+      height:38px;
+      background: #0ea5a4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:8px;
+      font-weight:700;
+      color:white;
+    }
+    
+    /* Navigation Items */
+    .nav-item-custom {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-item-custom:hover {
+      color: var(--primary-foreground);
+      background: rgba(255,255,255,0.04);
+    }
+    .nav-item-custom.active {
+      background: rgba(255,255,255,0.06);
+      border-radius:8px;
+      color:var(--primary-foreground);
+    }
+
+    /* -------------------------
+       Main Content Area
+       ------------------------- */
+    #main-content {
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+    }
+    
+    @media (max-width: 767px) {
+      #main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* -------------------------
+       Notification Items
+       ------------------------- */
+    .notification-item {
+      cursor: pointer;
+      border-bottom: 1px solid #eceef2;
+      padding: 1rem;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .notification-item:hover {
+      background: rgba(0,0,0,0.02);
+    }
+    .notification-item.unread {
+      background: rgba(37, 99, 235, 0.03);
+      border-left: 3px solid var(--primary);
+    }
+    .notification-item.read {
+      opacity: 0.7;
+    }
+    
+    /* Notification Icon */
+    .notification-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .notification-icon.registration {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    .notification-icon.message {
+      background: #d1fae5;
+      color: #059669;
+    }
+    .notification-icon.campaign {
+      background: #fce7f3;
+      color: #db2777;
+    }
+    .notification-icon.payment {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    .notification-icon.system {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+
+    /* NEW Badge */
+    .badge-new {
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* -------------------------
+       Three-Dot Menu Styling - ALWAYS VISIBLE
+       ------------------------- */
+    .notification-menu {
+      opacity: 1;
+      position: relative;
+    }
+
+    /* Vertical three dots button */
+    .btn-three-dots {
+      background: transparent;
+      border: none;
+      color: #6c757d;
+      font-size: 20px;
+      line-height: 1;
+      padding: 4px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      height: 28px;
+      width: 28px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-three-dots:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: #0f172a;
+    }
+
+    .btn-three-dots span {
+      width: 4px;
+      height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      display: block;
+    }
+
+    /* Dropdown menu styling */
+    .notification-menu .dropdown-menu {
+      min-width: 180px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e6e9ee;
+      padding: 0.5rem 0;
+      z-index: 1050;
+    }
+
+    .notification-menu .dropdown-item {
+      padding: 0.6rem 1rem;
+      font-size: 14px;
+      color: #0f172a;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .notification-menu .dropdown-item svg {
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .notification-menu .dropdown-item:hover {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+    }
+
+    .notification-menu .dropdown-item.text-danger:hover {
+      background: rgba(239, 68, 68, 0.08);
+      color: var(--danger);
+    }
+
+    .notification-menu .dropdown-item:disabled,
+    .notification-menu .dropdown-item.disabled {
+      opacity: 0.5;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    /* -------------------------
+       Helper Classes
+       ------------------------- */
+    .text-muted-sm { 
+      color: var(--muted); 
+      font-size: .9rem; 
+    }
+    .dot-online { 
+      width: 10px;
+      height: 10px;
+      border-radius: 50%; 
+      background: var(--online); 
+      display: inline-block; 
+      margin-right: .4rem; 
+    }
+
+    /* -------------------------
+       Scrollable Areas
+       ------------------------- */
+    .list-scroll { 
+      max-height: calc(100vh - 250px); 
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* -------------------------
+       Toast Notifications
+       ------------------------- */
+    .toast-container-top { 
+      position: fixed; 
+      top: 1rem; 
+      right: 1rem; 
+      z-index: 1080; 
+    }
+    
+    /* -------------------------
+       Mobile Overlay
+       ------------------------- */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    
+    @media (max-width: 767px) {
+      #sidebar-overlay.show {
+        display: block;
+      }
+    }
+    
+    /* -------------------------
+       Responsive Adjustments
+       ------------------------- */
+    @media (max-width: 767px) {
+      #app-sidebar {
+        width: 280px;
+      }
+      
+      .list-scroll {
+        max-height: calc(100vh - 200px);
+      }
+      
+      .notification-item {
+        padding: 0.75rem;
+      }
+    }
+    
+    /* -------------------------
+       Card Styling
+       ------------------------- */
+    .card {
+      border: 1px solid #e6e9ee;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* -------------------------
+       Pagination
+       ------------------------- */
+    .pagination .page-link {
+      color: var(--primary);
+      border: 1px solid #e6e9ee;
+    }
+    .pagination .page-link:hover {
+      background: var(--bg);
+    }
+    .pagination .page-item.active .page-link {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    /* =========================================
+       CUSTOM CSS STYLES END
+       ========================================= */
+  </style>
+</head>
+<body>
+
+<!-- Sidebar overlay for mobile -->
+<div id="sidebar-overlay"></div>
+
+<!-- ========================================
+     BOOTSTRAP TOAST CONTAINER
+     ======================================== -->
+<div class="toast-container toast-container-top" id="toastContainer"></div>
+<!-- ========================================
+     END BOOTSTRAP TOAST CONTAINER
+     ======================================== -->
+
+<!-- ========================================
+     SIDEBAR NAVIGATION
+     BACKEND: Replace static content with dynamic user data
+     ======================================== -->
+<nav id="app-sidebar" class="d-flex flex-column">
+  <!-- Mobile close button -->
+  <div class="d-flex d-md-none justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-light" id="mobileCloseBtn">Close</button>
+  </div>
+
+  <!-- Logo -->
+  <!-- BACKEND: Fetch company/platform branding from database -->
+  <div class="logo">
+    <div class="brand">S</div>
+    <div>
+      <div style="font-weight:700; font-size: 1rem;">seekooh</div>
+      <div style="font-size:.85rem; color:rgba(255,255,255,0.7)">Teacher platform</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <!-- BACKEND: Generate navigation items based on user permissions/role -->
+  <div class="nav flex-column">
+    <a href="#" class="nav-link nav-item-custom d-flex align-items-center mb-2 p-2 active" data-target="notificationsView">
+      <svg style="width:18px;height:18px; margin-right:.6rem" viewBox="0 0 24 24" fill="none"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6 6 0 1 0-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Notifications
+      <!-- BACKEND: Fetch unread notification count from database -->
+      <span class="ms-auto dot-online" id="notificationIndicator" title="new"></span>
+    </a>
+  </div>
+
+  <!-- Spacer -->
+  <div class="flex-grow-1"></div>
+</nav>
+<!-- ========================================
+     END SIDEBAR NAVIGATION
+     ======================================== -->
+
+<!-- ========================================
+     MAIN CONTENT AREA
+     ======================================== -->
+<main id="main-content" class="p-3" style="min-height:100vh;">
+  <!-- Top (mobile toggle + title) -->
+  <div class="d-flex align-items-center mb-3">
+    <button class="btn btn-outline-secondary d-md-none me-2" id="mobileOpenBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <h3 id="pageTitle" class="m-0">Notifications</h3>
+  </div>
+
+  <!-- Views container -->
+  <div id="viewsContainer">
+    <!-- ========================================
+         NOTIFICATIONS VIEW
+         BACKEND: Fetch notifications from database via API
+         API Endpoint: GET /api/notifications
+         Response: [{id, type, title, description, user, time, read, createdAt, category, link}, ...]
+         ======================================== -->
+    <section id="notificationsView">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="card-title m-0">NOTIFICATIONS</h4>
+            <!-- BACKEND: Mark all as read API call -->
+            <!-- API: PUT /api/notifications/mark-all-read -->
+            <button class="btn btn-sm btn-outline-primary" id="markAllReadBtn">Mark All as Read</button>
+          </div>
+
+          <!-- Notifications List -->
+          <!-- BACKEND: This container will be populated with notifications -->
+          <!-- Each notification should include: type, title, description, user, time, read status, createdAt, link -->
+          <div id="notificationsList" class="list-scroll">
+            <!-- BACKEND: Dynamically inject notification items here -->
+          </div>
+
+          <!-- Pagination -->
+          <!-- BACKEND: Implement server-side pagination -->
+          <!-- API: GET /api/notifications?page={page}&limit={limit} -->
+          <div class="d-flex justify-content-center gap-2 mt-3" id="paginationWrap">
+            <!-- BACKEND: Dynamically inject pagination buttons here -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<!-- ========================================
+     END MAIN CONTENT AREA
+     ======================================== -->
+
+<!-- ========================================
+     BOOTSTRAP MODALS
+     ======================================== -->
+<!-- Confirmation Modal (Delete / Report) -->
+<!-- BACKEND: On confirm, make appropriate API call based on action type -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalTitle">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="confirmModalBody">Are you sure?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="confirmCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ========================================
+     END BOOTSTRAP MODALS
+     ======================================== -->
+
+<!-- ========================================
+     BOOTSTRAP 5 BUNDLE WITH POPPER - CDN
+     ======================================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- ========================================
+     END BOOTSTRAP 5 BUNDLE
+     ======================================== -->
+
+<script>
+  /*****************************************
+   * JAVASCRIPT CODE START
+   * 
+   * BACKEND INTEGRATION NOTES:
+   * ========================================
+   * This is currently using sample/mock data.
+   * Replace the following sections with real API calls:
+   * 
+   * 1. AUTHENTICATION
+   *    - Add user authentication check on page load
+   *    - API: GET /api/auth/current-user
+   * 
+   * 2. NOTIFICATIONS
+   *    - Replace notificationsSample with API call
+   *    - API: GET /api/notifications?page={page}&limit={limit}
+   * 
+   * 3. MARK AS READ
+   *    - When notification is clicked, mark as read
+   *    - API: PUT /api/notifications/{id}/mark-read
+   * 
+   * 4. AUTO-DELETE READ NOTIFICATIONS
+   *    - Set up cron job or scheduled task to delete notifications
+   *    - Delete notifications that were marked as read 1 week ago
+   *    - API: DELETE /api/notifications/cleanup (run daily)
+   * 
+   * 5. NEW BADGE LOGIC
+   *    - Show NEW badge if createdAt is within 48 hours
+   *    - Remove badge after 48 hours or when clicked
+   * 
+   * 6. NOTIFICATION ACTIONS
+   *    - Mark as read: PUT /api/notifications/{id}/mark-read
+   *    - Delete: DELETE /api/notifications/{id}
+   *    - Report: POST /api/notifications/{id}/report
+   * 
+   * 7. REAL-TIME UPDATES
+   *    - Implement WebSocket for real-time notification updates
+   *    - Socket events: 'new_notification', 'notification_read'
+   *****************************************/
+
+  /*****************************************
+   * DATA & STATE
+   * BACKEND: Replace with API calls
+   *****************************************/
+  const notificationsSample = [
+    { 
+      id: 1, 
+      type: "registration", 
+      title: "New Registration", 
+      description: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium", 
+      user: "Fedom Reosenn at Midizum", 
+      time: "24 Nov 2025 at 9:30 AM", 
+      read: false, 
+      category: "teachers",
+      createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      link: "/teachers/registrations/123"
+    },
+    { 
+      id: 2, 
+      type: "message", 
+      title: "Message", 
+      description: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium", 
+      user: "Darren Smith sent new message", 
+      time: "24 Nov 2025 at 9:30 AM", 
+      read: false, 
+      category: "teachers",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      link: "/messages/456"
+    },
+    { 
+      id: 3, 
+      type: "campaign", 
+      title: "Campaign", 
+      description: "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium", 
+      user: "Alvin Gandhium Commented on post", 
+      time: "24 Nov 2025 at 9:30 AM", 
+      read: false, 
+      category: "students",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      link: "/campaigns/789"
+    },
+    { 
+      id: 4, 
+      type: "payment", 
+      title: "Payment Received", 
+      description: "New payment has been processed successfully for your account", 
+      user: "Payment System", 
+      time: "23 Nov 2025 at 3:15 PM", 
+      read: true, 
+      category: "payments",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago (outside 48h window)
+      readAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // Read 1 day ago
+      link: "/payments/101"
+    },
+    { 
+      id: 5, 
+      type: "system", 
+      title: "System Update", 
+      description: "Platform maintenance scheduled for this weekend. Please save your work.", 
+      user: "System Administrator", 
+      time: "22 Nov 2025 at 10:00 AM", 
+      read: true, 
+      category: "system",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
+      readAt: new Date(Date.now() - 1000 * 60 * 60 * 70), // Read 70 hours ago
+      link: "/system/updates"
+    }
+  ];
+
+  let allNotifications = [...notificationsSample];
+  const notificationsPerPage = 10;
+  let currentPage = 1;
+  
+  // For modal confirmation
+  const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  let pendingAction = null;
+  let pendingNotificationId = null;
+
+  /*****************************************
+   * UTILITY FUNCTIONS
+   *****************************************/
+  
+  /**
+   * Check if notification is new (within 48 hours)
+   * BACKEND: Calculate based on createdAt timestamp from database
+   */
+  function isNew(notification) {
+    const hoursSinceCreated = (Date.now() - new Date(notification.createdAt).getTime()) / (1000 * 60 * 60);
+    return hoursSinceCreated <= 48 && !notification.read;
+  }
+
+  /**
+   * Check if read notification should be deleted (older than 1 week after being read)
+   * BACKEND: This logic should be in a cron job on the server
+   */
+  function shouldAutoDelete(notification) {
+    if (!notification.read || !notification.readAt) return false;
+    const daysSinceRead = (Date.now() - new Date(notification.readAt).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceRead >= 7;
+  }
+
+  /**
+   * Get notification icon based on type
+   */
+  function getNotificationIcon(type) {
+    const icons = {
+      registration: '👤',
+      message: '💬',
+      campaign: '📢',
+      payment: '💰',
+      system: '⚙️'
+    };
+    return icons[type] || '🔔';
+  }
+
+  /*****************************************
+   * RENDER FUNCTIONS
+   *****************************************/
+  
+  /**
+   * Clean up old notifications automatically
+   * BACKEND: This should be handled by a server-side cron job
+   * API: DELETE /api/notifications/cleanup (run daily)
+   */
+  function cleanupOldNotifications() {
+    allNotifications = allNotifications.filter(n => !shouldAutoDelete(n));
+  }
+
+  /**
+   * Render notifications list
+   * BACKEND: Replace with API call to fetch notifications
+   * API: GET /api/notifications?page={page}&limit={limit}
+   */
+  function renderNotifications() {
+    cleanupOldNotifications();
+    
+    const container = document.getElementById('notificationsList');
+    if (!container) return;
+
+    const startIdx = (currentPage - 1) * notificationsPerPage;
+    const endIdx = startIdx + notificationsPerPage;
+    const pageNotifications = allNotifications.slice(startIdx, endIdx);
+
+    if (pageNotifications.length === 0) {
+      container.innerHTML = '<div class="text-center text-muted py-5"><p>No notifications yet</p></div>';
+      return;
+    }
+
+    container.innerHTML = pageNotifications.map(n => `
+      <div class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}" data-link="${n.link}">
+        <div class="d-flex gap-3 align-items-start">
+          <div class="notification-icon ${n.type}">
+            ${getNotificationIcon(n.type)}
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <div>
+                <strong>${n.title}</strong>
+                ${isNew(n) ? '<span class="badge-new ms-2">NEW</span>' : ''}
+              </div>
+              <div class="dropdown notification-menu">
+                <button class="btn-three-dots" data-bs-toggle="dropdown" onclick="event.stopPropagation()" aria-expanded="false">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  ${!n.read ? `
+                  <li><a class="dropdown-item" href="#" onclick="markAsRead(event, ${n.id})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Mark as Read
+                  </a></li>
+                  ` : `
+                  <li><a class="dropdown-item disabled">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Read
+                  </a></li>
+                  `}
+                  <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteNotification(event, ${n.id})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Delete
+                  </a></li>
+                  <li><a class="dropdown-item" href="#" onclick="confirmReportNotification(event, ${n.id})">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Report
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+            <p class="mb-1 text-muted-sm" style="max-width: 90%;">${n.description}</p>
+            <small class="text-muted">${n.user} • ${n.time}</small>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Add click handlers for notifications
+    container.querySelectorAll('.notification-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        // Don't trigger if clicking on dropdown menu or button
+        if (e.target.closest('.dropdown-menu') || e.target.closest('.btn-three-dots')) return;
+        
+        const id = parseInt(item.dataset.id);
+        const link = item.dataset.link;
+        handleNotificationClick(id, link);
+      });
+      
+      // Close dropdown when mouse leaves notification item
+      item.addEventListener('mouseleave', () => {
+        const dropdown = item.querySelector('.dropdown-menu');
+        if (dropdown && dropdown.classList.contains('show')) {
+          const bsDropdown = bootstrap.Dropdown.getInstance(item.querySelector('.btn-three-dots'));
+          if (bsDropdown) {
+            bsDropdown.hide();
+          }
+        }
+      });
+    });
+
+    renderPagination();
+    updateNotificationIndicator();
+  }
+
+  /**
+   * Handle notification click
+   * BACKEND: Mark as read and redirect
+   * API: PUT /api/notifications/{id}/mark-read
+   */
+  function handleNotificationClick(id, link) {
+    const notification = allNotifications.find(n => n.id === id);
+    if (!notification) return;
+
+    // Mark as read
+    if (!notification.read) {
+      notification.read = true;
+      notification.readAt = new Date();
+      
+      // BACKEND: API call to mark as read
+      // fetch(`/api/notifications/${id}/mark-read`, { method: 'PUT' })
+      
+      renderNotifications();
+      showToast('Notification marked as read');
+    }
+
+    // Redirect to link
+    // BACKEND: Implement actual navigation
+    console.log(`Redirecting to: ${link}`);
+    showToast(`Would redirect to: ${link}`);
+    
+    // In production, use:
+    // window.location.href = link;
+  }
+
+  /**
+   * Mark notification as read
+   * BACKEND: API call to mark as read
+   * API: PUT /api/notifications/{id}/mark-read
+   */
+  function markAsRead(event, id) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const notification = allNotifications.find(n => n.id === id);
+    if (notification && !notification.read) {
+      notification.read = true;
+      notification.readAt = new Date();
+      renderNotifications();
+      showToast('Marked as read');
+      
+      // BACKEND: API call
+      // fetch(`/api/notifications/${id}/mark-read`, { method: 'PUT' })
+    }
+  }
+
+  /**
+   * Confirm delete notification (shows modal)
+   */
+  function confirmDeleteNotification(event, id) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    pendingAction = 'delete';
+    pendingNotificationId = id;
+    
+    document.getElementById('confirmModalTitle').textContent = 'Delete Notification';
+    document.getElementById('confirmModalBody').textContent = 'Are you sure you want to delete this notification? This action cannot be undone.';
+    
+    confirmModal.show();
+  }
+
+  /**
+   * Confirm report notification (shows modal)
+   */
+  function confirmReportNotification(event, id) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    pendingAction = 'report';
+    pendingNotificationId = id;
+    
+    document.getElementById('confirmModalTitle').textContent = 'Report Notification';
+    document.getElementById('confirmModalBody').textContent = 'Are you sure you want to report this notification?';
+    
+    confirmModal.show();
+  }
+
+  /**
+   * Handle modal confirmation
+   */
+  document.getElementById('confirmOkBtn')?.addEventListener('click', () => {
+    if (pendingAction === 'delete' && pendingNotificationId) {
+      // Delete notification
+      // BACKEND: API call to delete
+      // fetch(`/api/notifications/${pendingNotificationId}`, { method: 'DELETE' })
+      
+      allNotifications = allNotifications.filter(n => n.id !== pendingNotificationId);
+      renderNotifications();
+      showToast('Notification deleted');
+    } else if (pendingAction === 'report' && pendingNotificationId) {
+      // Report notification
+      // BACKEND: API call to report
+      // fetch(`/api/notifications/${pendingNotificationId}/report`, { method: 'POST' })
+      
+      showToast('Notification reported');
+    }
+    
+    confirmModal.hide();
+    pendingAction = null;
+    pendingNotificationId = null;
+  });
+
+  /**
+   * Mark all notifications as read
+   * BACKEND: API call to mark all as read
+   * API: PUT /api/notifications/mark-all-read
+   */
+  document.getElementById('markAllReadBtn')?.addEventListener('click', () => {
+    allNotifications.forEach(n => {
+      if (!n.read) {
+        n.read = true;
+        n.readAt = new Date();
+      }
+    });
+    renderNotifications();
+    showToast('All notifications marked as read');
+    
+    // BACKEND: API call
+    // fetch('/api/notifications/mark-all-read', { method: 'PUT' })
+  });
+
+  /**
+   * Update notification indicator
+   * BACKEND: Fetch unread count from server
+   * API: GET /api/notifications/unread-count
+   */
+  function updateNotificationIndicator() {
+    const unreadCount = allNotifications.filter(n => !n.read).length;
+    const indicator = document.getElementById('notificationIndicator');
+    if (indicator) {
+      indicator.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  /**
+   * Render pagination
+   * BACKEND: Use pagination data from API response
+   */
+  function renderPagination() {
+    const container = document.getElementById('paginationWrap');
+    if (!container) return;
+
+    const totalPages = Math.ceil(allNotifications.length / notificationsPerPage);
+    
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let paginationHTML = '<nav><ul class="pagination mb-0">';
+    
+    // Previous button
+    paginationHTML += `
+      <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(event, ${currentPage - 1})">Previous</a>
+      </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      paginationHTML += `
+        <li class="page-item ${i === currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="changePage(event, ${i})">${i}</a>
+        </li>
+      `;
+    }
+    
+    // Next button
+    paginationHTML += `
+      <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(event, ${currentPage + 1})">Next</a>
+      </li>
+    `;
+    
+    paginationHTML += '</ul></nav>';
+    container.innerHTML = paginationHTML;
+  }
+
+  /**
+   * Change page
+   * BACKEND: Fetch new page data from API
+   * API: GET /api/notifications?page={page}&limit={limit}
+   */
+  function changePage(event, page) {
+    event.preventDefault();
+    const totalPages = Math.ceil(allNotifications.length / notificationsPerPage);
+    
+    if (page < 1 || page > totalPages) return;
+    
+    currentPage = page;
+    renderNotifications();
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /*****************************************
+   * MOBILE MENU TOGGLE
+   *****************************************/
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const mobileOpenBtn = document.getElementById('mobileOpenBtn');
+  const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+
+  mobileOpenBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('show');
+    overlay?.classList.add('show');
+  });
+
+  mobileCloseBtn?.addEventListener('click', () => {
+    sidebar?.classList.remove('show');
+    overlay?.classList.remove('show');
+  });
+
+  overlay?.addEventListener('click', () => {
+    sidebar?.classList.remove('show');
+    overlay?.classList.remove('show');
+  });
+
+  /**
+   * Toast notification helper
+   */
+  function showToast(message) {
+    const toastContainer = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    const toastHTML = `
+      <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto">Seekooh</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">${message}</div>
+      </div>
+    `;
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+  }
+
+  /*****************************************
+   * INITIALIZE APPLICATION
+   * 
+   * BACKEND: Add initialization code here
+   * 1. Check user authentication
+   * 2. Fetch user profile
+   * 3. Load notifications
+   * 4. Set up WebSocket connection for real-time updates
+   *****************************************/
+  document.addEventListener('DOMContentLoaded', () => {
+    // BACKEND: Add authentication check
+    // API: GET /api/auth/current-user
+    
+    // BACKEND: Initialize WebSocket connection for real-time notifications
+    // const socket = io('ws://your-server.com');
+    // socket.on('new_notification', handleNewNotification);
+    // socket.on('notification_read', handleNotificationRead);
+    
+    renderNotifications();
+  });
+
+  /*****************************************
+   * JAVASCRIPT CODE END
+   *****************************************/
+</script>
+
+</body>
+</html>
